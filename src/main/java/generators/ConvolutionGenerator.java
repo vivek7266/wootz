@@ -7,6 +7,7 @@ import wootz.Utils;
 
 public class ConvolutionGenerator extends BaseGenerator {
 
+    static int lastVarCount = -1;
 
     @Override
     public GeneratorOutput generate(Layer layer,
@@ -57,20 +58,20 @@ public class ConvolutionGenerator extends BaseGenerator {
         String[] nameSplit = layer.getName().split("/");
         String branchName = nameSplit[1];
         String scopeName = nameSplit[2];
-        String lastLayerName = branchName;
+        String lastLayerName = "branch_" + lastVarCount;
         StringBuilder out = new StringBuilder();
-
         indent++;
         if (!lastBranchName.equals(branchName)) {
             lastLayerName = "net";
             Utils.indentNextLine(out, indent);
             out.append("with tf.variable_scope(").append("'").append(branchName).append("'):");
             out.append(System.lineSeparator());
+            lastVarCount++;
         }
         indent++;
 
         Utils.indentNextLine(out, indent);
-        generateLayerSlimFunction(layer, out, branchName, lastLayerName, scopeName, getLayerType(layer));
+        generateLayerSlimFunction(layer, out, "branch_" + lastVarCount, lastLayerName, scopeName, getLayerType(layer));
         out.append(System.lineSeparator());
         return out;
     }

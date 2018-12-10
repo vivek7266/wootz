@@ -25,7 +25,7 @@ public class ConcatGenerator extends BaseGenerator {
         Utils.indentNextLine(codeMod, indent);
         codeMod.append("net").append(" = ").append("tf.concat").append("(");
         codeMod.append("axis=3").append(", ").append("values=").append("[")
-                .append(getBottomsNames(layer)).append("]")
+                .append(buildBranches(ConvolutionGenerator.lastVarCount)).append("]")
                 .append(")");
         codeMod.append(System.lineSeparator());
         indent--;
@@ -33,6 +33,7 @@ public class ConcatGenerator extends BaseGenerator {
         Utils.indentNextLine(codeMod, indent);
         generateEndPointsMap(codeMod);
         codeMod.append(System.lineSeparator());
+        ConvolutionGenerator.lastVarCount = -1;
         return codeMod;
     }
 
@@ -47,6 +48,17 @@ public class ConcatGenerator extends BaseGenerator {
             idx++;
         }
         return bottoms;
+    }
+
+    private StringBuilder buildBranches(int numBranches){
+        StringBuilder branches = new StringBuilder();
+        for (int i = 0; i <= numBranches;i++){
+            if (i > 0) {
+                branches.append(", ");
+            }
+            branches.append("branch_" + i);
+        }
+        return branches;
     }
 
 
