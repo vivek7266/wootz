@@ -29,6 +29,7 @@ public class TFConverter {
         generators.addGenerator("Dropout", new DropoutGenerator());
         generators.addGenerator("Reshape", new ReshapeGenerator());
         generators.addGenerator("Softmax", new SoftmaxGenerator());
+        generators.addGenerator("SoftmaxWithLoss", new SoftmaxGenerator());
     }
 
     public String generateTensorFlowCode(String filename) throws IOException {

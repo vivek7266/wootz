@@ -3,22 +3,19 @@ package wootz;
 import lombok.Data;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @ToString
 public class MLModel {
     private String name;
     private List<Layer> layerList;
-    private final Map<String, Map<String, Layer>> layerLookup;
+    private final Map<String, Layer> layerLookup;
     private int layerIndex;
 
     public MLModel() {
         layerList = new ArrayList<Layer>();
-        layerLookup = new HashMap<String, Map<String, Layer>>();
+        layerLookup = new HashMap<String, Layer>();
         layerIndex = 0;
     }
 
@@ -29,16 +26,6 @@ public class MLModel {
 
         String name = layer.getName();
         if (name == null) return;
-        String includePhase = layer.getAttr("include.phase");
-        includePhase = (includePhase == null) ? "" : includePhase;
-
-        if (layerLookup.containsKey(name)) {
-            layerLookup.get(name).put(includePhase, layer);
-        } else {
-            HashMap map = new HashMap();
-            map.put(includePhase, layer);
-            layerLookup.put(name, map);
-        }
 
         String type = layer.getAttr("type");
         Config config = Config.getInstance();
@@ -49,6 +36,8 @@ public class MLModel {
         } else {
             layer.setKind(Layer.Kind.INTERMEDIATE);
         }
+
+        layerLookup.put(name, layer);
     }
 
     public List<Layer> getDataLayers() {
@@ -66,10 +55,62 @@ public class MLModel {
         List<Layer> ret = new ArrayList<Layer>();
 
         for (Layer layer : layerList) {
-            if (layer.getKind() != Layer.Kind.DATA) {
+            if (layer.getKind() != null && layer.getKind() != Layer.Kind.DATA) {
                 ret.add(layer);
             }
         }
         return ret;
     }
+
+    public List<Layer> reOrderLayers(List<Layer> currentLayers){
+        Set<String> layerDone = new HashSet<>();
+        List<Layer> newOrderedLayers = new ArrayList<>();
+        String firstLayer = "";
+        for (Layer layer: currentLayers){
+            String layerName = layer.getName();
+            if (layerName == null){
+                newOrderedLayers.add(layer);
+            }
+            if (layerName != null && layer.getTop() != null && layerName.equals(layer.getTop())){
+                firstLayer = layerName;
+                break;
+            }
+        }
+        if (firstLayer.equals("")){
+            return layerList;
+        }
+        layerDone.add(firstLayer);
+        if (layerLookup.containsKey(firstLayer)) {
+            newOrderedLayers.add(layerLookup.get(firstLayer));
+        }
+        for (Layer layer: currentLayers){
+            String layerName = layer.getName();
+            if (layerName == null){
+                continue;
+            }
+            if (layerDone.contains(layerName)){
+                continue;
+            }
+            List<String> bottoms = layer.getBottoms();
+            if (bottoms != null) {
+                for (String bottom : bottoms) {
+                    if (layerDone.contains(bottom)){
+                        continue;
+                    }
+                    if (layerLookup.containsKey(bottom)) {
+                        newOrderedLayers.add(layerLookup.get(bottom));
+                        layerDone.add(bottom);
+                    }
+                }
+            }
+            layerDone.add(layerName);
+            newOrderedLayers.add(layer);
+        }
+        return  newOrderedLayers;
+    }
+
+    public void setLayerList(List<Layer> layerList){
+        this.layerList = layerList;
+    }
 }
+

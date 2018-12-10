@@ -78,9 +78,9 @@ public class ConvolutionGenerator extends BaseGenerator {
     private String getLayerType(Layer layer) {
         String layerType = "conv2d";
         if (layer.getType().equalsIgnoreCase("Pooling")) {
-            if (layer.getName().startsWith("Max")) {
+            if (layer.getAttr("pooling_param.pool").equalsIgnoreCase("MAX")) {
                 layerType = "max_pool2d";
-            } else if (layer.getName().startsWith("Avg")) {
+            } else if (layer.getAttr("pooling_param.pool").equalsIgnoreCase("AVE")) {
                 layerType = "avg_pool2d";
             }
         }
@@ -102,7 +102,7 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append("slim.");
         out.append(layerType);
         out.append("(");
-        out.append((layer.getLayerIndex() > 2) ? lastLayerName : layer.getBottom()).append(", ");
+        out.append((layer.getName() != null) ? lastLayerName : layer.getBottom()).append(", ");
         out.append(layer.getAttr("convolution_param.num_output")).append(", ");
         out.append("[");
         String kernel_size = layer.getAttr("convolution_param.kernel_size");
@@ -113,7 +113,7 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append("scope=").append("'").append(scopeName).append("'").append(")");
     }
 
-    private void generatePoolingLayerSlimFunction(Layer layer, StringBuilder out,
+    private void    generatePoolingLayerSlimFunction(Layer layer, StringBuilder out,
                                                   String intialVariable, String scopeName, String layerType) {
         String kernel_size;
         if (!layer.getAttr().containsKey("pooling_param.kernel_size")) {

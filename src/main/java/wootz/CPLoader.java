@@ -36,12 +36,6 @@ public class CPLoader extends CaffePrototxtBaseListener {
     Integer inputLayer = 0;
     Integer input = 0;
 
-    String[] LAYER_TYPES = {"AbsVal", "Accuracy", "ArgMax", "BatchNorm", "BNLL", "Concat", "ContrastiveLoss",
-            "Convolution", "Deconvolution", "Data", "Dropout", "DummyData", "EuclideanLoss", "Eltwise", "Exp",
-            "Flatten", "HDF5Data", "HDF5Output", "HingeLoss", "Im2col", "ImageData", "InfogainLoss", "InnerProduct",
-            "Input", "LRN", "MemoryData", "MultinomialLogisticLoss", "MVN", "Pooling", "Power", "ReLU", "Reshape", "Scale",
-            "Sigmoid", "SigmoidCrossEntropyLoss", "Silence", "Softmax", "SoftmaxWithLoss", "Split", "Slice", "TanH",
-            "WindowData", "Threshold"};
 
     @Override
     public void enterName(CaffePrototxtParser.NameContext ctx) {
@@ -92,7 +86,7 @@ public class CPLoader extends CaffePrototxtBaseListener {
 
     @Override
     public void exitPrototxt(CaffePrototxtParser.PrototxtContext ctx) {
-        super.exitPrototxt(ctx);
+        mlModel.setLayerList(mlModel.reOrderLayers(mlModel.getLayerList()));
     }
 
     @Override
