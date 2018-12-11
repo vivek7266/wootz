@@ -131,10 +131,8 @@ public class TFConverter {
         code.append(System.lineSeparator());
         indent++;
 
-        if (multiplexing){
-            Utils.indentNextLine(code, indent);
-            generateMultiplexingTemplate(code);
-            code.append(System.lineSeparator());
+        if (multiplexing) {
+            generateMultiplexingTemplate(code, indent);
         }
 
         Utils.indentNextLine(code, indent);
@@ -174,7 +172,7 @@ public class TFConverter {
                 "                        batch_norm_epsilon=0.001,\n" +
                 "                        batch_norm_updates_collections=tf.GraphKeys.UPDATE_OPS):\n" +
                 "\n" +
-                "  batch_norm_params = {\n" +
+                "   batch_norm_params = {\n" +
                 "      # Decay for the moving averages.\n" +
                 "      'decay': batch_norm_decay,\n" +
                 "      # epsilon to prevent 0s in variance.\n" +
@@ -183,29 +181,29 @@ public class TFConverter {
                 "      'updates_collections': batch_norm_updates_collections,\n" +
                 "      # use fused batch norm if possible.\n" +
                 "      'fused': None,\n" +
-                "  }\n" +
-                "  if use_batch_norm:\n" +
-                "    normalizer_fn = slim.batch_norm\n" +
-                "    normalizer_params = batch_norm_params\n" +
-                "  else:\n" +
-                "    normalizer_fn = None\n" +
-                "    normalizer_params = {}\n" +
+                "   }\n" +
+                "   if use_batch_norm:\n" +
+                "       normalizer_fn = slim.batch_norm\n" +
+                "       normalizer_params = batch_norm_params\n" +
+                "   else:\n" +
+                "       normalizer_fn = None\n" +
+                "       normalizer_params = {}\n" +
                 "\n" +
-                "  # Set training state \n" +
-                "  with slim.arg_scope([slim.batch_norm, slim.dropout],\n" +
+                "   # Set training state \n" +
+                "   with slim.arg_scope([slim.batch_norm, slim.dropout],\n" +
                 "                        is_training=is_training):\n" +
-                "    # Set weight_decay for weights in Conv and FC layers.\n" +
-                "    with slim.arg_scope([slim.conv2d, slim.fully_connected],\n" +
+                "       # Set weight_decay for weights in Conv and FC layers.\n" +
+                "       with slim.arg_scope([slim.conv2d, slim.fully_connected],\n" +
                 "                        weights_regularizer=slim.l2_regularizer(weight_decay)):\n" +
-                "      # Set batch norm \n" +
-                "      with slim.arg_scope(\n" +
+                "       # Set batch norm \n" +
+                "       with slim.arg_scope(\n" +
                 "          [slim.conv2d],\n" +
                 "          normalizer_fn=normalizer_fn,\n" +
                 "          normalizer_params=normalizer_params):\n" +
-                "          # Set default padding and stride\n" +
-                "            with slim.arg_scope([slim.conv2d, slim.max_pool2d],\n" +
+                "           # Set default padding and stride\n" +
+                "           with slim.arg_scope([slim.conv2d, slim.max_pool2d],\n" +
                 "                      stride=1, padding='SAME') as sc:\n" +
-                "              return sc");
+                "               return sc");
         return out;
     }
 
@@ -239,8 +237,12 @@ public class TFConverter {
         code.append("slim = tf.contrib.slim\n");
     }
 
-    private void generateMultiplexingTemplate(StringBuilder code){
+    private void generateMultiplexingTemplate(StringBuilder code, int indent) {
+        Utils.indentNextLine(code, indent);
         code.append("selectdepth = lambda k,v: int(config[k]['ratio']*v) if config and k in config and 'ratio' in config[k] else v");
+        code.append(System.lineSeparator());
+        Utils.indentNextLine(code, indent);
         code.append("selectinput = lambda k, v: config[k]['input'] if config and k in config and 'input' in config[k] else v");
+        code.append(System.lineSeparator());
     }
 }
