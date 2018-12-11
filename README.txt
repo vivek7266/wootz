@@ -50,3 +50,9 @@ $ java -jar target/wootz-1.0-SNAPSHOT.jar src/main/resources/alexnet.prototxt
 Saved file in location: alexnet.py
 
 ===================================================================================================
+
+
+Grammar: src/main/java/grammars/CaffePrototxt.g4
+ANTLR generated files: src/main/java/generators
+Test cases: src/main/resources/*.prototxt
+output: *.py
