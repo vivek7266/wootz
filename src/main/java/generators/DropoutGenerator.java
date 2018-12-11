@@ -9,7 +9,7 @@ public class DropoutGenerator extends BaseGenerator {
 
     @Override
     public GeneratorOutput generate(Layer layer,
-                                    MLModel model, int indent, StringBuilder mixedLayerData, String flag) {
+                                    MLModel model, int indent, StringBuilder mixedLayerData, String flag, Boolean multiplexing) {
         StringBuilder out = new StringBuilder();
         indent++;
 

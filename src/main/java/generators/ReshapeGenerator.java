@@ -9,7 +9,7 @@ public class ReshapeGenerator extends BaseGenerator {
 
     @Override
     public GeneratorOutput generate(Layer layer,
-                                    MLModel model, int indent, StringBuilder logitsLayerData, String flag) {
+                                    MLModel model, int indent, StringBuilder logitsLayerData, String flag, Boolean multiplexing) {
         StringBuilder out = new StringBuilder();
 
         Utils.indentNextLine(out, indent);

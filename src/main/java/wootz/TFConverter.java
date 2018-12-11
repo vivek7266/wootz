@@ -15,10 +15,12 @@ import java.util.List;
 public class TFConverter {
     private final MLModel mlModel;
     private final SymbolGeneratorFactory generators;
+    private final Boolean multiplexing;
 
-    public TFConverter() {
+    public TFConverter(Boolean multiplexing) {
         this.mlModel = new MLModel();
         this.generators = SymbolGeneratorFactory.getInstance();
+        this.multiplexing = multiplexing;
         addGenerators();
     }
 
@@ -60,7 +62,7 @@ public class TFConverter {
             SymbolGenerator generator = generators.getGenerator(layer.getType());
             if (generator != null) { // If we have a generator
                 // Generate code
-                GeneratorOutput out = generator.generate(layer, mlModel, 3, interimData, lastBranchName);
+                GeneratorOutput out = generator.generate(layer, mlModel, 3, interimData, lastBranchName, multiplexing);
                 String segment = out.code;
                 if (layer.getName().startsWith("Mixed")) {
                     if (layer.getType().equalsIgnoreCase("Concat")) {
@@ -128,6 +130,12 @@ public class TFConverter {
         generateMLFunction(numClasses, inputName, code);
         code.append(System.lineSeparator());
         indent++;
+
+        if (multiplexing){
+            Utils.indentNextLine(code, indent);
+            generateMultiplexingTemplate(code);
+            code.append(System.lineSeparator());
+        }
 
         Utils.indentNextLine(code, indent);
         code.append("with tf.variable_scope(scope, \"Model\", reuse=reuse):");
@@ -226,5 +234,10 @@ public class TFConverter {
 
     private void generateSlim(StringBuilder code) {
         code.append("slim = tf.contrib.slim\n");
+    }
+
+    private void generateMultiplexingTemplate(StringBuilder code){
+        code.append("selectdepth = lambda k,v: int(config[k]['ratio']*v) if config and k in config and 'ratio' in config[k] else v");
+        code.append("selectinput = lambda k, v: config[k]['input'] if config and k in config and 'input' in config[k] else v");
     }
 }

@@ -4,10 +4,11 @@ import java.io.IOException;
 
 public class WootzMain {
     private static final String PROTO_FILE = "src/main/resources/inception_v1.prototxt";
-
+    private static Boolean multiplexing = Boolean.FALSE;
     public static void main(String[] args) {
         try {
-            TFConverter tfConverter = new TFConverter();
+            multiplexing = Boolean.TRUE;
+            TFConverter tfConverter = new TFConverter(multiplexing);
             String code = tfConverter.generateTensorFlowCode(PROTO_FILE);
             System.out.println("output");
             System.out.println(code);

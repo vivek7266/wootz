@@ -8,12 +8,13 @@ import wootz.Utils;
 public class ConvolutionGenerator extends BaseGenerator {
 
     static int lastVarCount = -1;
+    static int branchVarCount = 0;
 
     @Override
     public GeneratorOutput generate(Layer layer,
-                                    MLModel model, int indent, StringBuilder metaData, String lastBranchName) {
+                                    MLModel model, int indent, StringBuilder metaData, String lastBranchName, Boolean multiplexing) {
         if (layer.getName().startsWith("Mixed")) {
-            return new GeneratorOutput(genrateMixedLayer(layer, model, indent, lastBranchName).toString(), 1);
+            return new GeneratorOutput(genrateMixedLayer(layer, model, indent, lastBranchName, multiplexing).toString(), 1);
         } else if (layer.getName().startsWith("Logits")) {
             return new GeneratorOutput(generateLogitsLayer(layer, indent).toString(), 1);
         }
@@ -25,7 +26,7 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append(System.lineSeparator());
 
         Utils.indentNextLine(out, indent);
-        generateLayerSlimFunction(layer, out, "net", "net", "end_point", getLayerType(layer));
+        generateLayerSlimFunction(layer, out, "net", "net", "end_point", getLayerType(layer), multiplexing);
         out.append(System.lineSeparator());
 
         Utils.indentNextLine(out, indent);
@@ -53,7 +54,7 @@ public class ConvolutionGenerator extends BaseGenerator {
     }
 
 
-    private StringBuilder genrateMixedLayer(Layer layer, MLModel model, int indent, String lastBranchName) {
+    private StringBuilder genrateMixedLayer(Layer layer, MLModel model, int indent, String lastBranchName, Boolean multiplexing) {
 
         String[] nameSplit = layer.getName().split("/");
         String branchName = nameSplit[1];
@@ -62,6 +63,7 @@ public class ConvolutionGenerator extends BaseGenerator {
         StringBuilder out = new StringBuilder();
         indent++;
         if (!lastBranchName.equals(branchName)) {
+            branchVarCount = 0;
             lastLayerName = "net";
             Utils.indentNextLine(out, indent);
             out.append("with tf.variable_scope(").append("'").append(branchName).append("'):");
@@ -71,8 +73,9 @@ public class ConvolutionGenerator extends BaseGenerator {
         indent++;
 
         Utils.indentNextLine(out, indent);
-        generateLayerSlimFunction(layer, out, "branch_" + lastVarCount, lastLayerName, scopeName, getLayerType(layer));
+        generateLayerSlimFunction(layer, out, "branch_" + lastVarCount, lastLayerName, scopeName, getLayerType(layer), multiplexing);
         out.append(System.lineSeparator());
+        branchVarCount++;
         return out;
     }
 
@@ -93,9 +96,9 @@ public class ConvolutionGenerator extends BaseGenerator {
     }
 
     private void generateLayerSlimFunction(Layer layer, StringBuilder out,
-                                           String intialVariable, String lastLayerName, String scopeName, String layerType) {
+                                           String intialVariable, String lastLayerName, String scopeName, String layerType, Boolean multiplexing) {
         if (layer.getType().equals("Pooling")) {
-            generatePoolingLayerSlimFunction(layer, out, intialVariable, scopeName, layerType);
+            generatePoolingLayerSlimFunction(layer, out, intialVariable, scopeName, layerType, multiplexing);
             return;
         }
         out.append(intialVariable);
@@ -104,7 +107,11 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append(layerType);
         out.append("(");
         out.append((layer.getName() != null) ? lastLayerName : layer.getBottom()).append(", ");
-        out.append(layer.getAttr("convolution_param.num_output")).append(", ");
+        if (multiplexing && lastVarCount > 0 && lastVarCount < 3 && branchVarCount == 0) {
+            out.append("selectdepth(end_point, ").append(layer.getAttr("convolution_param.num_output")).append(")").append(", ");
+        } else {
+            out.append(layer.getAttr("convolution_param.num_output")).append(", ");
+        }
         out.append("[");
         String kernel_size = layer.getAttr("convolution_param.kernel_size");
         out.append(kernel_size).append(", ").append(kernel_size).append("]").append(", ");
@@ -114,8 +121,8 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append("scope=").append("'").append(scopeName).append("'").append(")");
     }
 
-    private void    generatePoolingLayerSlimFunction(Layer layer, StringBuilder out,
-                                                  String intialVariable, String scopeName, String layerType) {
+    private void generatePoolingLayerSlimFunction(Layer layer, StringBuilder out,
+                                                  String intialVariable, String scopeName, String layerType, Boolean multiplexing) {
         String kernel_size;
         if (!layer.getAttr().containsKey("pooling_param.kernel_size")) {
             String[] name_split = layer.getName().split("x");

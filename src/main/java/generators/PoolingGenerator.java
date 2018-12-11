@@ -5,15 +5,10 @@ import wootz.Layer;
 import wootz.MLModel;
 import wootz.Utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class PoolingGenerator extends BaseGenerator {
 
     @Override
-    public GeneratorOutput generate(Layer layer, MLModel model, int indent, StringBuilder metaData, String flag) {
+    public GeneratorOutput generate(Layer layer, MLModel model, int indent, StringBuilder metaData, String flag, Boolean multiplexing) {
         if (layer.getName().startsWith("Mixed")) {
             return new GeneratorOutput("", 1);
         }

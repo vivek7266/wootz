@@ -8,12 +8,18 @@ import wootz.Utils;
 public class ConcatGenerator extends BaseGenerator {
 
 
-    private StringBuilder generateMixedLayerConcat(Layer layer, int indent, StringBuilder mixedLayerData) {
+    private StringBuilder generateMixedLayerConcat(Layer layer, int indent, StringBuilder mixedLayerData, Boolean multiplexing) {
         StringBuilder codeMod = new StringBuilder();
 
         Utils.indentNextLine(codeMod, indent);
         generateName(layer, codeMod);
         codeMod.append(System.lineSeparator());
+
+        if (multiplexing){
+            Utils.indentNextLine(codeMod, indent);
+            codeMod.append("net = selectinput(end_point, net)");
+            codeMod.append(System.lineSeparator());
+        }
 
         Utils.indentNextLine(codeMod, indent);
         codeMod.append("with tf.variable_scope(end_point):");
@@ -56,7 +62,7 @@ public class ConcatGenerator extends BaseGenerator {
             if (i > 0) {
                 branches.append(", ");
             }
-            branches.append("branch_" + i);
+            branches.append("branch_").append(i);
         }
         return branches;
     }
@@ -64,8 +70,8 @@ public class ConcatGenerator extends BaseGenerator {
 
     @Override
     public GeneratorOutput generate(Layer layer,
-                                    MLModel model, int indent, StringBuilder mixedLayerData, String flag) {
-        StringBuilder out = generateMixedLayerConcat(layer, indent, mixedLayerData);
+                                    MLModel model, int indent, StringBuilder mixedLayerData, String flag, Boolean multiplexing) {
+        StringBuilder out = generateMixedLayerConcat(layer, indent, mixedLayerData, multiplexing);
 
         return new GeneratorOutput(out.toString(), 1);
     }
