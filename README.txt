@@ -56,3 +56,4 @@ Grammar: src/main/java/grammars/CaffePrototxt.g4
 ANTLR generated files: src/main/java/generators
 Test cases: src/main/resources/*.prototxt
 output: *.py
+Main class: src/main/java/wootz/WootzMain.java
