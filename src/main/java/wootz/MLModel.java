@@ -12,6 +12,8 @@ public class MLModel {
     private List<Layer> layerList;
     private final Map<String, Layer> layerLookup;
     private int layerIndex;
+    private String inputImageSize = "224";
+    private String inputName = "inputs";
 
     public MLModel() {
         layerList = new ArrayList<Layer>();
@@ -66,12 +68,31 @@ public class MLModel {
         Set<String> layerDone = new HashSet<>();
         List<Layer> newOrderedLayers = new ArrayList<>();
         String firstLayer = "";
+        String inputName = "";
+        int breakCondition = 0;
+        for (Layer layer: currentLayers) {
+            if (breakCondition == 2){
+                break;
+            }
+
+            String prototxt = layer.getPrototxt().trim();
+            if (!prototxt.startsWith("input_shape") && prototxt.startsWith("input")) {
+                String[] inputSplit = prototxt.split(":");
+                inputName = inputSplit[1].trim().replace("\"", "");
+                this.inputName = inputName;
+                newOrderedLayers.add(layer);
+                breakCondition++;
+            }else if (prototxt.startsWith("input_shape")) {
+                List<String> inputImageSizeArr = layer.getAttrList("dim");
+                inputImageSize = inputImageSizeArr.get(inputImageSizeArr.size() - 1);
+
+                newOrderedLayers.add(layer);
+                breakCondition++;
+            }
+        }
         for (Layer layer: currentLayers){
             String layerName = layer.getName();
-            if (layerName == null){
-                newOrderedLayers.add(layer);
-            }
-            if (layerName != null && layer.getTop() != null && layerName.equals(layer.getTop())){
+            if (layerName != null && layer.getBottoms() != null && layer.getBottoms().size() > 0 && inputName.equals(layer.getBottoms().get(0))){
                 firstLayer = layerName;
                 break;
             }

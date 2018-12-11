@@ -11,7 +11,10 @@ public class DropoutGenerator extends BaseGenerator {
     public GeneratorOutput generate(Layer layer,
                                     MLModel model, int indent, StringBuilder mixedLayerData, String flag, Boolean multiplexing) {
         StringBuilder out = new StringBuilder();
-        indent++;
+        if (flag.contains("logits") || layer.getName().toLowerCase().contains("logits")) {
+            indent++;
+        }
+
 
         Utils.indentNextLine(out, indent);
         out.append("net");
@@ -20,9 +23,17 @@ public class DropoutGenerator extends BaseGenerator {
         out.append("(")
                 .append("net").append(", ")
                 .append(layer.getAttr("dropout_param.dropout_ratio")).append(", ")
-                .append("scope=").append("'").append(layer.getName().split("/")[1]).append("'")
+                .append("scope=").append("'").append(getLayerName(layer)).append("'")
                 .append(")");
         out.append(System.lineSeparator());
         return new GeneratorOutput(out.toString(), 1);
+    }
+
+    private String getLayerName(Layer layer) {
+        if (layer.getName().contains("/")) {
+            return layer.getName().split("/")[1];
+        } else {
+            return layer.getName();
+        }
     }
 }

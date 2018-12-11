@@ -12,6 +12,16 @@ public class Utils {
         return arg;
     }
 
+    public String toLowerAndRemoveHyphens(String arg){
+        return arg.toLowerCase().replace("-", "");
+    }
+
+    public String setProperName(String layerName){
+        layerName = removeQuotes(layerName);
+        layerName = toLowerAndRemoveHyphens(layerName);
+        return layerName;
+    }
+
     public static void indentNextLine(StringBuilder code, int indent) {
         for (int i = 0; i < indent; i++){
             code.append("\t");

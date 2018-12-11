@@ -32,6 +32,7 @@ public class TFConverter {
         generators.addGenerator("Reshape", new ReshapeGenerator());
         generators.addGenerator("Softmax", new SoftmaxGenerator());
         generators.addGenerator("SoftmaxWithLoss", new SoftmaxGenerator());
+        generators.addGenerator("InnerProduct", new FullyConnectedGenerator());
     }
 
     public String generateTensorFlowCode(String filename) throws IOException {
@@ -43,18 +44,14 @@ public class TFConverter {
         StringBuilder layerData = new StringBuilder();
         StringBuilder interimData = new StringBuilder();
         String lastBranchName = "";
-        String numClasses = "100";
-        String inputImageSize = "223";
-        String inputName = "input";
-        if (layers.get(1).getPrototxt().split(" ")[0].equals("input_shape")) {
-            List<String> inputImageSizeArr = layers.get(1).getAttrList("dim");
-            inputImageSize = inputImageSizeArr.get(inputImageSize.length() - 1);
-        }
-        if (layers.get(0).getPrototxt().split(":")[0].equals("input")) {
-            inputName = layers.get(0).getPrototxt().split(": ")[1].replace("\"", "");
-        }
+        String numClasses = "1000";
         for (int layerIndex = 0; layerIndex < layers.size(); ) {
             Layer layer = layers.get(layerIndex);
+            if (layerIndex == 0){
+                if (layer.getBottom() != null && !layer.getBottom().equals(mlModel.getInputName())){
+                    mlModel.setInputName(layer.getBottom());
+                }
+            }
             if (layer.getType().equals("ReLU") || layer.getType().equals("BatchNorm")) {
                 layerIndex++;
                 continue;
@@ -79,6 +76,9 @@ public class TFConverter {
                         layerData.append(System.lineSeparator());
                         interimData = new StringBuilder();
                     } else {
+                        if (layer.getName().contains("/")) {
+                            lastBranchName = layer.getName().split("/")[1];
+                        }
                         interimData.append(segment);
                     }
                 } else {
@@ -99,7 +99,8 @@ public class TFConverter {
             }
         }
 
-        StringBuilder code = generateOverallConversion(layerData, numClasses, inputImageSize, inputName);
+        StringBuilder code = generateOverallConversion(layerData, numClasses,
+                mlModel.getInputImageSize(), mlModel.getInputName());
 
         return code.toString();
     }
@@ -166,11 +167,11 @@ public class TFConverter {
         out.append("# The code is applicable to any model. It is adapted from \n" +
                 "# https://github.com/tensorflow/models/blob/master/research/slim/nets/inception_utils.py\n" +
                 "def default_arg_scope(is_training=True, \n" +
-                "                        weight_decay=0.00004,\n" +
-                "                        use_batch_norm=True,\n" +
-                "                        batch_norm_decay=0.9997,\n" +
-                "                        batch_norm_epsilon=0.001,\n" +
-                "                        batch_norm_updates_collections=tf.GraphKeys.UPDATE_OPS):\n" +
+                "                       weight_decay=0.00004,\n" +
+                "                       use_batch_norm=True,\n" +
+                "                       batch_norm_decay=0.9997,\n" +
+                "                       batch_norm_epsilon=0.001,\n" +
+                "                       batch_norm_updates_collections=tf.GraphKeys.UPDATE_OPS):\n" +
                 "\n" +
                 "   batch_norm_params = {\n" +
                 "      # Decay for the moving averages.\n" +
@@ -195,15 +196,15 @@ public class TFConverter {
                 "       # Set weight_decay for weights in Conv and FC layers.\n" +
                 "       with slim.arg_scope([slim.conv2d, slim.fully_connected],\n" +
                 "                        weights_regularizer=slim.l2_regularizer(weight_decay)):\n" +
-                "       # Set batch norm \n" +
-                "       with slim.arg_scope(\n" +
-                "          [slim.conv2d],\n" +
-                "          normalizer_fn=normalizer_fn,\n" +
-                "          normalizer_params=normalizer_params):\n" +
-                "           # Set default padding and stride\n" +
-                "           with slim.arg_scope([slim.conv2d, slim.max_pool2d],\n" +
+                "           # Set batch norm \n" +
+                "           with slim.arg_scope(\n" +
+                "           [slim.conv2d],\n" +
+                "           normalizer_fn=normalizer_fn,\n" +
+                "           normalizer_params=normalizer_params):\n" +
+                "               # Set default padding and stride\n" +
+                "               with slim.arg_scope([slim.conv2d, slim.max_pool2d],\n" +
                 "                      stride=1, padding='SAME') as sc:\n" +
-                "               return sc");
+                "                   return sc");
         return out;
     }
 

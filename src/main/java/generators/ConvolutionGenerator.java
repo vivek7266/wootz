@@ -11,10 +11,11 @@ public class ConvolutionGenerator extends BaseGenerator {
     static int branchVarCount = 0;
 
     @Override
-    public GeneratorOutput generate(Layer layer,
-                                    MLModel model, int indent, StringBuilder metaData, String lastBranchName, Boolean multiplexing) {
+    public GeneratorOutput generate(Layer layer, MLModel model,
+                                    int indent, StringBuilder metaData, String lastBranchName, Boolean multiplexing) {
         if (layer.getName().startsWith("Mixed")) {
-            return new GeneratorOutput(genrateMixedLayer(layer, model, indent, lastBranchName, multiplexing).toString(), 1);
+            return new GeneratorOutput(genrateMixedLayer(layer, model,
+                    indent, lastBranchName, multiplexing).toString(), 1);
         } else if (layer.getName().startsWith("Logits")) {
             return new GeneratorOutput(generateLogitsLayer(layer, indent).toString(), 1);
         }
@@ -26,7 +27,8 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append(System.lineSeparator());
 
         Utils.indentNextLine(out, indent);
-        generateLayerSlimFunction(layer, out, "net", "net", "end_point", getLayerType(layer), multiplexing);
+        generateLayerSlimFunction(layer, out, "net",
+                "net", "end_point", getLayerType(layer), multiplexing, model);
         out.append(System.lineSeparator());
 
         Utils.indentNextLine(out, indent);
@@ -54,7 +56,8 @@ public class ConvolutionGenerator extends BaseGenerator {
     }
 
 
-    private StringBuilder genrateMixedLayer(Layer layer, MLModel model, int indent, String lastBranchName, Boolean multiplexing) {
+    private StringBuilder genrateMixedLayer(Layer layer, MLModel model,
+                                            int indent, String lastBranchName, Boolean multiplexing) {
 
         String[] nameSplit = layer.getName().split("/");
         String branchName = nameSplit[1];
@@ -73,7 +76,8 @@ public class ConvolutionGenerator extends BaseGenerator {
         indent++;
 
         Utils.indentNextLine(out, indent);
-        generateLayerSlimFunction(layer, out, "branch_" + lastVarCount, lastLayerName, scopeName, getLayerType(layer), multiplexing);
+        generateLayerSlimFunction(layer, out, "branch_" + lastVarCount,
+                lastLayerName, scopeName, getLayerType(layer), multiplexing, model);
         out.append(System.lineSeparator());
         branchVarCount++;
         return out;
@@ -96,7 +100,7 @@ public class ConvolutionGenerator extends BaseGenerator {
     }
 
     private void generateLayerSlimFunction(Layer layer, StringBuilder out,
-                                           String intialVariable, String lastLayerName, String scopeName, String layerType, Boolean multiplexing) {
+                                           String intialVariable, String lastLayerName, String scopeName, String layerType, Boolean multiplexing, MLModel mlModel) {
         if (layer.getType().equals("Pooling")) {
             generatePoolingLayerSlimFunction(layer, out, intialVariable, scopeName, layerType, multiplexing);
             return;
@@ -106,7 +110,7 @@ public class ConvolutionGenerator extends BaseGenerator {
         out.append("slim.");
         out.append(layerType);
         out.append("(");
-        out.append((layer.getName() != null) ? lastLayerName : layer.getBottom()).append(", ");
+        out.append((layer.getBottom().equals(mlModel.getInputName())) ? layer.getBottom() : lastLayerName).append(", ");
         if (multiplexing && lastVarCount > 0 && lastVarCount < 3 && branchVarCount == 0) {
             out.append("selectdepth(end_point, ").append(layer.getAttr("convolution_param.num_output")).append(")").append(", ");
         } else {

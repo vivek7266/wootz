@@ -45,7 +45,7 @@ public class CPLoader extends CaffePrototxtBaseListener {
     @Override
     public void exitName(CaffePrototxtParser.NameContext ctx) {
         String name = ctx.STRING().toString();
-        mlModel.setName(utils.removeQuotes(name));
+        mlModel.setName(utils.setProperName(name));
     }
 
     @Override
