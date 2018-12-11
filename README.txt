@@ -9,6 +9,7 @@ Java version >= 8 (this project also runs on java 10.0.2 )
 Running instructions:
 
 In the home directory: wootz
+this should be the working directory for following command to work.
 
 $ mvn clean install
 $ java -jar target/wootz-1.0-SNAPSHOT.jar <path_of_prototxt> <multiplexing_boolean>
