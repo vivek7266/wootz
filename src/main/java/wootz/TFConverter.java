@@ -217,8 +217,11 @@ public class TFConverter {
                 .append("num_classes=").append(numClasses).append(", ")
                 .append("is_training=").append("True").append(", ")
                 .append("reuse=").append("None").append(", ")
-                .append("scope=").append("'").append(mlModel.getName()).append("'")
-                .append("):");
+                .append("scope=").append("'").append(mlModel.getName()).append("'");
+        if (multiplexing) {
+            code.append(", ").append("config=None");
+        }
+        code.append("):");
     }
 
     private void generateImports(StringBuilder code) {
